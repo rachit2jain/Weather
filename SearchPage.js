@@ -11,16 +11,14 @@ import {
   ActivityIndicator
 } from 'react-native';
 var ReactNative = require('react-native');
+var SearchResults = require('./SearchResults');
 function queryGenerator(searchString){
 
 	var queryString = searchString + '&appid=5612d77e941e951d16765907e819f232';
 
 	return 'http://api.openweathermap.org/data/2.5/weather?q=' + queryString
 }
-function round(value, precision) {
-    var multiplier = Math.pow(10, precision || 0);
-    return Math.round(value * multiplier) / multiplier;
-}
+
 class searchPage extends Component{
 	constructor(props) {
   		super(props);
@@ -29,17 +27,18 @@ class searchPage extends Component{
     		message:'',
     		searchString:'',
     		temperature:'',
-    		isResponse:false
+    		isResponse:false,
+        description:'', 
+        name:''
  		};
 	}
 	onSearchTextChange(event){
 		this.setState( {searchString:event.nativeEvent.text});
 	}
 	_executeQuery(query){
-		console.log(query);
 		fetch(query)
 		.then(response => response.json())
-		.then(json => this._handleResponse(json.main))
+		.then(json => this._handleResponse(json))
 		.catch(error =>
 		 this.setState({
 		  isLoading: false,
@@ -53,8 +52,15 @@ class searchPage extends Component{
 		this._executeQuery(query);
 	}
 	_handleResponse(response) {
-		this.setState({ isLoading: false , message: '', temperature:"Current Temperature: " + round(response.temp-273,1) , isResponse: true });
+		this.setState({ isLoading: false , message: '', temperature: response.main, description: response.weather[0], name: response.name });
+    console.log(this.state.description);
+    this.props.navigator.push({
+      title: this.state.name,
+      component: SearchResults,
+      passProps: {temperature: this.state.temperature, description: this.state.description}
+    });
 	}
+
 
 	render(){	
 		var spinner = this.state.isLoading ?
@@ -78,7 +84,7 @@ class searchPage extends Component{
 				</View>
 				{spinner}
 				
-				<Text >  {this.state.temperature} </Text>
+				
 			</View>
 			
 			);
@@ -90,6 +96,7 @@ var styles = ReactNative.StyleSheet.create({
     backgroundColor: 'white',
     fontSize: 20,
     margin:80,
+    textAlign: 'center'
   },
   container: {
     flex: 1
@@ -113,6 +120,7 @@ button: {
   borderWidth: 1,
   borderRadius: 8,
   marginBottom: 10,
+  marginRight: 5,
   alignSelf: 'stretch',
   justifyContent: 'center'
 },
@@ -123,6 +131,7 @@ searchInput: {
   height: 36,
   padding: 4,
   marginRight: 5,
+  marginLeft:5,
   flex: 4,
   fontSize: 18,
   borderWidth: 1,
